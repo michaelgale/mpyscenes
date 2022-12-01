@@ -23,9 +23,7 @@ def main():
         ),
         start_time=0.5,
     )
-
-    ms.render_clips(0, 5)
-    ms.render_video(prores_alpha=True)
+    ms.render_video(0, 5, prores_alpha=False)
 
 
 if __name__ == "__main__":

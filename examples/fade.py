@@ -11,8 +11,7 @@ def main():
     s0.buildout.append(FadeOutAction(duration=0.25))
     ms.add_scene(s0, start_time=0.25)
 
-    ms.render_clips(0, 2)
-    ms.render_video(prores_alpha=True)
+    ms.render_video(0, 2)
 
 
 if __name__ == "__main__":

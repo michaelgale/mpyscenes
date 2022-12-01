@@ -77,8 +77,9 @@ class Movie:
         v = CompositeVideoClip(self.clips)
         v.write_images_sequence(fn, fps=self.fps, withmask=True, logger="bar")
 
-    def render_video(self, filename=None, prores_alpha=False):
+    def render_video(self, tstart=0, tstop=0, filename=None, prores_alpha=False):
         """Renders final video file in either transparent ProRes4444 or mp4."""
+        self.render_clips(tstart=tstart, tstop=tstop)
         fn = filename if filename is not None else self.filename
         if prores_alpha:
             self.render_video_frames(filename=filename)

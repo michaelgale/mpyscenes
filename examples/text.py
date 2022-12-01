@@ -9,8 +9,7 @@ def main():
     t0.fontsize = 100
     t0.set_pos(0.35, 0.5)
     ms.add_object(t0)
-    ms.render_clips(0, 1)
-    ms.render_video(prores_alpha=True)
+    ms.render_video(0, 1, prores_alpha=True)
 
 
 if __name__ == "__main__":
