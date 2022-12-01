@@ -33,6 +33,8 @@ class SceneObject:
             self.pixsize = size_preset_tuple(kwargs["pixsize"])
         else:
             self.pixsize = (0, 0)
+        if "pos" in kwargs:
+            self.set_pos(kwargs["pos"])
 
     def __str__(self):
         s = []

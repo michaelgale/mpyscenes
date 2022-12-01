@@ -24,6 +24,8 @@ class TextSceneObject(SceneObject):
             if k in self.__dict__:
                 if "color" in k:
                     self.__dict__[k] = self.color_name(v)
+                elif "pos" in k:
+                    self.set_pos(kwargs["pos"])
                 else:
                     self.__dict__[k] = v
 

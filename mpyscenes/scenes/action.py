@@ -45,6 +45,12 @@ class SceneAction:
         pass
 
 
+class NoAction(SceneAction):
+    def __init__(self, **kwargs):
+        self.duration = 0
+        super().__init__(**kwargs)
+
+
 class MoveAction(SceneAction):
     def __init__(self, **kwargs):
         self.duration = 4

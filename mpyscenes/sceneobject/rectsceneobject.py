@@ -8,8 +8,8 @@ from ..helpers import *
 
 class RectSceneObject(SceneObject):
     def __init__(self, size=(0, 0), **kwargs):
-        super().__init__(**kwargs)
         self.rect = Rect(*size)
+        super().__init__(**kwargs)
         self.color = (255, 255, 255)
         self.top_anim = None
         self.bottom_anim = None
@@ -23,6 +23,8 @@ class RectSceneObject(SceneObject):
             if k in self.__dict__:
                 if "color" in k:
                     self.__dict__[k] = SceneObject.color_to_tuple(v)
+                elif "pos" in k:
+                    self.set_pos(kwargs["pos"])
                 else:
                     self.__dict__[k] = v
 
