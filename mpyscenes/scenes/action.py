@@ -11,7 +11,11 @@ class SceneAction:
     """
 
     def __init__(self, **kwargs):
+        self.duration = 0
         self.fps = 60
+        self.delay = 0
+        self.ease_in = True
+        self.ease_out = True
         self.animators = {
             "x": None,
             "y": None,
@@ -23,6 +27,8 @@ class SceneAction:
             "bottom": None,
             "opacity": None,
             "blur": None,
+            "scale": None,
+            "angle": None,
         }
         for k, v in kwargs.items():
             self.__dict__[k] = v
@@ -44,16 +50,59 @@ class SceneAction:
     def setup_animators(self, start_time=0, **kwargs):
         pass
 
+    def choose_animator(self, start_time, offset=None, to_value=None):
+        t0, t1 = start_time, start_time + self.duration
+        if self.ease_in:
+            if self.ease_out:
+                a = EaseInOutAnimator(
+                    t0,
+                    0,
+                    t1,
+                    0,
+                    fps=self.fps,
+                    offset_from_previous=offset,
+                    value_from_previous=to_value,
+                )
+            else:
+                a = EaseInAnimator(
+                    t0,
+                    0,
+                    t1,
+                    0,
+                    fps=self.fps,
+                    offset_from_previous=offset,
+                    value_from_previous=to_value,
+                )
+        elif self.ease_out:
+            a = EaseOutAnimator(
+                t0,
+                0,
+                t1,
+                0,
+                fps=self.fps,
+                offset_from_previous=offset,
+                value_from_previous=to_value,
+            )
+        else:
+            a = LinearAnimator(
+                t0,
+                0,
+                t1,
+                0,
+                fps=self.fps,
+                offset_from_previous=offset,
+                value_from_previous=to_value,
+            )
+        return a
+
 
 class NoAction(SceneAction):
     def __init__(self, **kwargs):
-        self.duration = 0
         super().__init__(**kwargs)
 
 
 class MoveAction(SceneAction):
     def __init__(self, **kwargs):
-        self.duration = 4
         super().__init__(**kwargs)
         self.start_pos = Point(0, 0)
         if "start_pos" in kwargs:
@@ -85,6 +134,50 @@ class MoveAction(SceneAction):
     @property
     def y_end(self):
         return self.end_pos[1]
+
+
+class MoveUpAction(MoveAction):
+    def __init__(self, duration=1, offset=0, **kwargs):
+        super().__init__(**kwargs)
+        self.duration = duration
+        self.offset = offset
+
+    def setup_animators(self, start_time=0, **kwargs):
+        a = self.choose_animator(start_time, offset=-self.offset)
+        self.animators["y"] = a
+
+
+class MoveDownAction(MoveAction):
+    def __init__(self, duration=1, offset=0, **kwargs):
+        super().__init__(**kwargs)
+        self.duration = duration
+        self.offset = offset
+
+    def setup_animators(self, start_time=0, **kwargs):
+        a = self.choose_animator(start_time, offset=self.offset)
+        self.animators["y"] = a
+
+
+class MoveLeftAction(MoveAction):
+    def __init__(self, duration=1, offset=0, **kwargs):
+        super().__init__(**kwargs)
+        self.duration = duration
+        self.offset = offset
+
+    def setup_animators(self, start_time=0, **kwargs):
+        a = self.choose_animator(start_time, offset=-self.offset)
+        self.animators["x"] = a
+
+
+class MoveRightAction(MoveAction):
+    def __init__(self, duration=1, offset=0, **kwargs):
+        super().__init__(**kwargs)
+        self.duration = duration
+        self.offset = offset
+
+    def setup_animators(self, start_time=0, **kwargs):
+        a = self.choose_animator(start_time, offset=self.offset)
+        self.animators["x"] = a
 
 
 class LinearMoveAction(MoveAction):
@@ -134,3 +227,36 @@ class EaseInOutMoveAction(MoveAction):
                 degree=self.degree,
                 fps=self.fps,
             )
+
+
+class ScaleAction(SceneAction):
+    def __init__(self, duration=1, scale=1.0, **kwargs):
+        super().__init__(**kwargs)
+        self.duration = duration
+        self.scale = scale
+
+    def setup_animators(self, start_time=0, **kwargs):
+        a = self.choose_animator(start_time, to_value=self.scale)
+        self.animators["scale"] = a
+
+
+class BlurAction(SceneAction):
+    def __init__(self, duration=1, blur=1.0, **kwargs):
+        super().__init__(**kwargs)
+        self.duration = duration
+        self.blur = blur
+
+    def setup_animators(self, start_time=0, **kwargs):
+        a = self.choose_animator(start_time, to_value=self.blur)
+        self.animators["blur"] = a
+
+
+class RotateAction(SceneAction):
+    def __init__(self, duration=1, angle=0.0, **kwargs):
+        super().__init__(**kwargs)
+        self.duration = duration
+        self.angle = angle
+
+    def setup_animators(self, start_time=0, **kwargs):
+        a = self.choose_animator(start_time, to_value=self.angle)
+        self.animators["angle"] = a

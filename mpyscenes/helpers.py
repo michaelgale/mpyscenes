@@ -1,4 +1,5 @@
 import numpy as np
+import scipy
 from moviepy.editor import *
 from toolbox import *
 
@@ -38,7 +39,10 @@ def size_preset_tuple(sizestr):
 
 
 def fill_array(a, color):
-    c = colour_from_name(color)
+    if isinstance(color, (list, tuple)):
+        c = color
+    else:
+        c = colour_from_name(color)
     r = np.ones_like(a)
     r[:, :, 0] = r[:, :, 0] * c[0]
     r[:, :, 1] = r[:, :, 1] * c[1]

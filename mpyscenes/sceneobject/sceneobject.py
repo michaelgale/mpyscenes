@@ -15,6 +15,7 @@ class SceneObject:
         self.pos = Point(0, 0)
         self.opacity = 1
         self.scale = 1.0
+        self.angle = 0.0
         self.blur = 0
         self.layer = 0
         self.x_anim = None
@@ -23,6 +24,7 @@ class SceneObject:
         self.scale_anim = None
         self.blur_anim = None
         self.enable_anim = None
+        self.angle_anim = None
         self.clip_obj = None
         self.mask_obj = None
         self.is_mask = False
@@ -64,6 +66,10 @@ class SceneObject:
     def update_frame_scale(self, frame):
         if self.scale_anim is not None:
             self.scale = self.scale_anim[frame]
+
+    def update_frame_angle(self, frame):
+        if self.angle_anim is not None:
+            self.angle = self.angle_anim[frame]
 
     def update_frame_blur(self, frame):
         if self.blur_anim is not None:

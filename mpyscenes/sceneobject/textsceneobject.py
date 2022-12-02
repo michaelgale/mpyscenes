@@ -1,4 +1,7 @@
 import numpy as np
+from PIL import Image, ImageDraw, ImageOps
+from imageio import imread, imsave
+
 from moviepy.editor import *
 
 from toolbox import *
@@ -81,6 +84,7 @@ class TextSceneObject(SceneObject):
             self.pos[1] = self.y_anim[frame]
 
     def update_frame(self, frame):
+        self.update_frame_angle(frame)
         self.update_frame_pos(frame)
         self.update_frame_opacity(frame)
         self.update_frame_scale(frame)
@@ -93,12 +97,26 @@ class TextSceneObject(SceneObject):
         return mask
 
     def get_clip_frame(self, frame, t0, t1):
+        self.update_frame(frame)
         if self.clip_obj is None:
             self.clip_obj = self.new_clip_obj()
-        self.update_frame(frame)
         if not self.opacity > 0:
             return None
-        clipx = self.clip_obj
+        clipx = self.clip_obj.set_duration(t1 - t0)
+        if self.angle_anim is not None or abs(self.angle) > 0:
+            pix = Image.new("RGBA", (self.pixsize[0], self.pixsize[1]), (0, 0, 0, 0))
+            x = np.zeros_like(pix)
+            x[:, :, 0] = self.clip_obj.img[:, :, 0]
+            x[:, :, 1] = self.clip_obj.img[:, :, 1]
+            x[:, :, 2] = self.clip_obj.img[:, :, 2]
+            m = (x[:, :, 0] + x[:, :, 1] + x[:, :, 2]) / 3
+            x[:, :, 3] = np.minimum(1, m) * 255
+            ximg = Image.fromarray(x)
+            ximg = ximg.rotate(self.angle, resample=Image.BILINEAR)
+            pix.paste(ximg)
+            pix = np.asarray(pix)
+            clipx.mask = ImageClip(1.0 * pix[:, :, 3] / 255, ismask=True)
+            clipx = ImageClip(pix, transparent=True, ismask=False)
         if self.blur_anim is not None:
             fl = lambda pic: fill_array(pic, self.color)
             clipx = clipx.fl_image(fl)

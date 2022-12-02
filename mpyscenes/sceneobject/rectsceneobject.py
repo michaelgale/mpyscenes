@@ -1,5 +1,6 @@
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageOps
+from imageio import imread, imsave
 from moviepy.editor import *
 from toolbox import *
 from mpyscenes import *
@@ -67,8 +68,15 @@ class RectSceneObject(SceneObject):
             self.rect.set_size_anchored(self.width_anim[frame], self.rect.height)
         if self.height_anim is not None:
             self.rect.set_size_anchored(self.rect.width, self.height_anim[frame])
+        self.update_frame_blur(frame)
+        self.update_frame_scale(frame)
+        self.update_frame_angle(frame)
 
     def get_rect_clip_pix(self, x0, y0, x1, y1, color=None):
+        r = self.rect.copy()
+        if self.scale_anim is not None or abs(self.scale - 1.0) > 1e3:
+            w, h = self.rect.width * self.scale, self.rect.height * self.scale
+            r.set_size_anchored(w, h)
         if self.is_mask:
             rect = np.array([(x0, y0), (x1, y0), (x1, y1), (x0, y1), (x0, y0)])
             img = Image.new("L", (self.pixsize[0], self.pixsize[1]), 0)
@@ -78,11 +86,16 @@ class RectSceneObject(SceneObject):
             return ImageClip(pix, transparent=True, ismask=True)
         else:
             color = color if color is not None else (0, 0, 0)
-            rect = np.array([(x0, y0), (x1, y0), (x1, y1), (x0, y1), (x0, y0)])
-            img = Image.new("RGBA", (self.pixsize[0], self.pixsize[1]), (0, 0, 0, 0))
-            draw = ImageDraw.Draw(img)
-            draw.polygon([tuple(p) for p in rect], fill=color)
-            pix = np.asarray(img)
+            pix = Image.new("RGBA", (self.pixsize[0], self.pixsize[1]), (0, 0, 0, 0))
+            rw, rh = int(r.width * self.pixsize[0]), int(r.height * self.pixsize[1])
+            img = Image.new("RGBA", (rw, rh), (*color, 255))
+            rx, ry = r.get_centre()
+            xc, yc = int(rx * self.pixsize[0]), int(ry * self.pixsize[1])
+            img = img.rotate(self.angle, expand=True)
+            x0, y0 = int(xc - img.size[0] / 2), int(yc - img.size[1] / 2)
+            pix.paste(img, box=(x0, y0))
+            pix = np.asarray(pix)
+            self.mask = ImageClip(1.0 * pix[:, :, 3] / 255, ismask=True)
             return ImageClip(pix, transparent=True, ismask=False)
 
     def get_rect_clip(self, x0, y0, x1, y1, color=None):
@@ -93,11 +106,15 @@ class RectSceneObject(SceneObject):
         return self.get_rect_clip_pix(xp0, yp0, xp1, yp1, color)
 
     def get_clip_obj(self):
+        r = self.rect.copy()
+        if self.scale_anim is not None or abs(self.scale - 1.0) > 1e3:
+            w, h = self.rect.width * self.scale, self.rect.height * self.scale
+            r.set_size_anchored(w, h)
         self.clip_obj = self.get_rect_clip(
-            self.rect.left,
-            self.rect.top,
-            self.rect.right,
-            self.rect.bottom,
+            r.left,
+            r.top,
+            r.right,
+            r.bottom,
             self.color,
         )
         return self.clip_obj
@@ -113,4 +130,55 @@ class RectSceneObject(SceneObject):
             .set_end(t1)
             .set_layer(self.layer)
         )
+        if self.blur_anim is not None:
+            fl = lambda pic: fill_array(pic, self.color)
+            clip = clip.fl_image(fl)
+            bl = lambda pic: blur_image(pic, self.blur)
+            clip.mask = clip.mask.fl_image(bl)
+        return clip
+
+
+class ImageSceneObject(RectSceneObject):
+    def __init__(self, size=(0, 0), filename=None, **kwargs):
+        self.rect = Rect(*size)
+        super().__init__(size=size, **kwargs)
+        self.filename = filename
+
+    def get_clip_obj(self):
+        r = self.rect.copy()
+        if self.scale_anim is not None or abs(self.scale - 1.0) > 1e3:
+            w, h = self.rect.width * self.scale, self.rect.height * self.scale
+            r.set_size_anchored(w, h)
+        if self.filename is not None:
+            pix = Image.new("RGBA", (self.pixsize[0], self.pixsize[1]), (0, 0, 0, 0))
+            img = imread(self.filename)
+            iw, ih = img.shape[0], img.shape[1]
+            rw, rh = r.width * self.pixsize[0], r.height * self.pixsize[1]
+            scale = rw / iw
+            rx, ry = r.get_centre()
+            xc, yc = int(rx * self.pixsize[0]), int(ry * self.pixsize[1])
+            img = Image.fromarray(img, mode="RGBA")
+            img = ImageOps.scale(img, scale)
+            img = img.rotate(self.angle, expand=True)
+            x0, y0 = int(xc - img.size[0] / 2), int(yc - img.size[1] / 2)
+            pix.paste(img, box=(x0, y0))
+            pix = np.asarray(pix)
+            self.mask = ImageClip(1.0 * pix[:, :, 3] / 255, ismask=True)
+            self.clip_obj = ImageClip(pix, transparent=True, ismask=False)
+        return self.clip_obj
+
+    def get_clip_frame(self, frame, t0, t1):
+        self.update_frame(frame)
+        if not self.opacity > 0:
+            return None
+        clip = (
+            self.get_clip_obj()
+            .set_opacity(self.opacity)
+            .set_start(t0)
+            .set_end(t1)
+            .set_layer(self.layer)
+        )
+        if self.blur_anim is not None:
+            bl = lambda pic: blur_image(pic, self.blur)
+            clip = clip.fl_image(bl)
         return clip

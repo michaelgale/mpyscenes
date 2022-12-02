@@ -13,7 +13,7 @@ script_dir = os.path.dirname(__file__)
 
 from .movie import Movie
 from .sceneobject.sceneobject import SceneObject
-from .sceneobject.rectsceneobject import RectSceneObject
+from .sceneobject.rectsceneobject import RectSceneObject, ImageSceneObject
 from .sceneobject.textsceneobject import TextSceneObject
 from .scenes.scene import *
 from .scenes.action import *

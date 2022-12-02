@@ -1,6 +1,7 @@
 *.py[cod]
 .vscode
 *.mov
+*.mp4
 
 # C extensions
 *.so
