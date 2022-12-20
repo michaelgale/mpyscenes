@@ -8,6 +8,11 @@ def main():
     t0 = TextSceneObject(text="Hello", horz_align="center", color="#E05010", layer=1)
     t0.fontsize = 100
     s0 = FlyInOutScene(obj=t0, fade_in=True, fade_out=False)
+    s0.actions.append(
+        ChangeColorAction(
+            duration=2.0, delay=1.0, color=(20, 20, 225), oscillate=True, rate=6
+        )
+    )
     ms.add_scene(s0, start_time=0.25)
 
     ms.add_scene(

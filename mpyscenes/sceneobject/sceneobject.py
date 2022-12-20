@@ -7,7 +7,7 @@ from ..helpers import *
 class SceneObject:
     """Base class which defines the properties of an object in a movie scene.
     SceneObjects can be added directly to a Movie if they are more or less
-    persistent in a movie.  For animated or special behaviours in a movie, a
+    persistent in a movie.  For animated or special behaviors in a movie, a
     SceneObject can be attached to a Scene and have one or more SceneActions
     applied to it."""
 
@@ -25,18 +25,25 @@ class SceneObject:
         self.blur_anim = None
         self.enable_anim = None
         self.angle_anim = None
+        self.color_r_anim = None
+        self.color_g_anim = None
+        self.color_b_anim = None
         self.clip_obj = None
         self.mask_obj = None
         self.is_mask = False
         for k, v in kwargs.items():
             if k in self.__dict__:
-                self.__dict__[k] = v
+                if "color" in k:
+                    self.__dict__[k] = SceneObject.color_to_tuple(v)
+                else:
+                    self.__dict__[k] = v
         if "pixsize" in kwargs:
             self.pixsize = size_preset_tuple(kwargs["pixsize"])
         else:
             self.pixsize = (0, 0)
         if "pos" in kwargs:
             self.set_pos(kwargs["pos"])
+        self.scene = Scene(obj=self)
 
     def __str__(self):
         s = []
@@ -74,6 +81,59 @@ class SceneObject:
     def update_frame_blur(self, frame):
         if self.blur_anim is not None:
             self.blur = self.blur_anim[frame]
+
+    def update_frame_color(self, frame):
+        color = list(self.color)
+        if self.color_r_anim is not None:
+            color[0] = int(self.color_r_anim[frame])
+        if self.color_g_anim is not None:
+            color[1] = int(self.color_g_anim[frame])
+        if self.color_b_anim is not None:
+            color[2] = int(self.color_b_anim[frame])
+        self.color = tuple(color)
+
+    def assign_animator_from_key(self, key, animator):
+        if key == "x":
+            self.x_anim = animator
+        elif key == "y":
+            self.y_anim = animator
+        elif key == "left":
+            self.left_anim = animator
+        elif key == "right":
+            self.right_anim = animator
+        elif key == "width":
+            self.width_anim = animator
+        elif key == "height":
+            self.height_anim = animator
+        elif key == "top":
+            self.top_anim = animator
+        elif key == "bottom":
+            self.bottom_anim = animator
+        elif key == "opacity":
+            self.op_anim = animator
+        elif key == "blur":
+            self.blur_anim = animator
+        elif key == "scale":
+            self.scale_anim = animator
+        elif key == "angle":
+            self.angle_anim = animator
+        elif key == "color_r":
+            self.color_r_anim = animator
+        elif key == "color_g":
+            self.color_g_anim = animator
+        elif key == "color_b":
+            self.color_b_anim = animator
+        elif key == "draw":
+            self.draw_anim = animator
+
+    def add_action(self, action):
+        self.scene.add_action(action)
+
+    def add_buildin(self, action):
+        self.scene.add_buildin(action)
+
+    def add_buildout(self, action):
+        self.scene.add_buildout(action)
 
     def color_name(self, v):
         if isinstance(v, (tuple, list)):

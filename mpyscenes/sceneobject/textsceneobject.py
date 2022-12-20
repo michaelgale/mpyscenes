@@ -26,7 +26,13 @@ class TextSceneObject(SceneObject):
         for k, v in kwargs.items():
             if k in self.__dict__:
                 if "color" in k:
-                    self.__dict__[k] = self.color_name(v)
+                    if isinstance(v, str):
+                        if "#" in v:
+                            self.__dict__[k] = rgb_from_hex(v, as_uint8=True)
+                        else:
+                            self.__dict__[k] = colour_from_name(v)
+                    else:
+                        self.__dict__[k] = v
                 elif "pos" in k:
                     self.set_pos(kwargs["pos"])
                 else:
@@ -44,7 +50,7 @@ class TextSceneObject(SceneObject):
         def _get_text_clip(size=None):
             r = TextClip(
                 self.text,
-                color=self.color,
+                color=self.color_name(self.color),
                 size=size,
                 font=self.font,
                 fontsize=self.fontsize,
@@ -54,7 +60,6 @@ class TextSceneObject(SceneObject):
                 align="center",
                 transparent=True,
                 bg_color="transparent",
-                # method="caption"
             )
             return r
 
@@ -86,6 +91,7 @@ class TextSceneObject(SceneObject):
     def update_frame(self, frame):
         self.update_frame_angle(frame)
         self.update_frame_pos(frame)
+        self.update_frame_color(frame)
         self.update_frame_opacity(frame)
         self.update_frame_scale(frame)
         self.update_frame_blur(frame)

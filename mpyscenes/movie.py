@@ -57,6 +57,11 @@ class Movie:
         scene.setup_scene(start_time=start_time)
         self.add_object(scene.obj)
 
+    def add_sceneobject(self, sceneobject, start_time=0):
+        sceneobject.scene.fps = self.fps
+        sceneobject.scene.setup_scene(start_time=start_time)
+        self.add_object(sceneobject)
+
     def _frame_filename(self, filename):
         if "." in filename:
             filename = filename.split(".")[0]

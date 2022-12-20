@@ -29,34 +29,15 @@ def object_value_from_key(obj, key):
         return obj.scale
     elif key == "angle":
         return obj.angle
+    elif key == "color_r":
+        return obj.color[0]
+    elif key == "color_g":
+        return obj.color[1]
+    elif key == "color_b":
+        return obj.color[2]
+    elif key == "draw":
+        return obj.draw_length
     return None
-
-
-def assign_object_animator_from_key(obj, key, animator):
-    if key == "x":
-        obj.x_anim = animator
-    elif key == "y":
-        obj.y_anim = animator
-    elif key == "left":
-        obj.left_anim = animator
-    elif key == "right":
-        obj.right_anim = animator
-    elif key == "width":
-        obj.width_anim = animator
-    elif key == "height":
-        obj.height_anim = animator
-    elif key == "top":
-        obj.top_anim = animator
-    elif key == "bottom":
-        obj.bottom_anim = animator
-    elif key == "opacity":
-        obj.op_anim = animator
-    elif key == "blur":
-        obj.blur_anim = animator
-    elif key == "scale":
-        obj.scale_anim = animator
-    elif key == "angle":
-        obj.angle_anim = animator
 
 
 class Scene:
@@ -93,6 +74,35 @@ class Scene:
         # usually implemented by a derived class
         pass
 
+    def _listify(self, items):
+        if not isinstance(items, list):
+            return [items]
+        return items
+
+    def add_action(self, actions):
+        actions = self._listify(actions)
+        t0 = actions[0].delay
+        for action in actions:
+            action.delay = t0
+            self.actions.append(action)
+            t0 += action.duration
+
+    def add_buildin(self, actions):
+        actions = self._listify(actions)
+        t0 = actions[0].delay
+        for action in actions:
+            action.delay = t0
+            self.buildin.append(action)
+            t0 += action.duration
+
+    def add_buildout(self, actions):
+        actions = self._listify(actions)
+        t0 = actions[0].delay
+        for action in actions:
+            action.delay = t0
+            self.buildout.append(action)
+            t0 += action.duration
+
     def _setup_action_animators(self, actions, start_time=0, **kwargs):
         max_duration = 0
         if len(actions) > 0:
@@ -124,7 +134,7 @@ class Scene:
             for animator in animators[1:]:
                 delay = animator.start_frame - a.stop_frame
                 a.add_animator(animator, with_delay=delay)
-        assign_object_animator_from_key(self.obj, key, a)
+        self.obj.assign_animator_from_key(key, a)
         if key == "x":
             if "loc" in self.__dict__:
                 self.obj.pos = Point(0, self.loc)
@@ -137,11 +147,9 @@ class Scene:
             action.fps = self.fps
         self.setup_actions()
         t0 = start_time
-        td = self._setup_action_animators(self.buildin, start_time=t0, **kwargs)
-        t0 += td
-        td = self._setup_action_animators(self.actions, start_time=t0, **kwargs)
-        t0 += td
-        td = self._setup_action_animators(self.buildout, start_time=t0, **kwargs)
+        t0 += self._setup_action_animators(self.buildin, start_time=t0, **kwargs)
+        t0 += self._setup_action_animators(self.actions, start_time=t0, **kwargs)
+        t0 += self._setup_action_animators(self.buildout, start_time=t0, **kwargs)
         self.animators = {}
         for action in [*self.buildin, *self.actions, *self.buildout]:
             for k, v in action.animators.items():

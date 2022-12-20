@@ -45,6 +45,7 @@ class RectSceneObject(SceneObject):
         self.rect.set_size(size)
 
     def update_frame(self, frame):
+        self.update_frame_color(frame)
         self.update_frame_opacity(frame)
         if self.top_anim is not None:
             self.rect.top = self.top_anim[frame]

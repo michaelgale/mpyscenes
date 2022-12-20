@@ -10,8 +10,11 @@ class FadeInAction(SceneAction):
         super().__init__(**kwargs)
 
     def setup_animators(self, start_time=0, **kwargs):
+        opacity = 1
+        if "opacity" in kwargs:
+            opacity = kwargs["opacity"]
         self.animators["opacity"] = LinearAnimator(
-            start_time, 0, start_time + self.duration, 1, fps=self.fps
+            start_time, 0, start_time + self.duration, opacity, fps=self.fps
         )
 
 
