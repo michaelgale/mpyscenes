@@ -4,7 +4,7 @@ import os
 
 # fmt: off
 __project__ = 'mpyscenes'
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 # fmt: on
 
 VERSION = __project__ + "-" + __version__
@@ -12,13 +12,14 @@ VERSION = __project__ + "-" + __version__
 script_dir = os.path.dirname(__file__)
 
 from .movie import Movie
-from .scenes.scene import *
+
+# from .scenes.scene import *
 from .sceneobject.sceneobject import SceneObject
 from .sceneobject.rectsceneobject import RectSceneObject, ImageSceneObject
 from .sceneobject.textsceneobject import TextSceneObject
 from .sceneobject.linesceneobject import LineSceneObject, TextLineSceneObject
-from .scenes.action import *
-from .scenes.buildin import *
-from .scenes.buildout import *
-from .scenes.presets import *
+from .sceneaction.action import *
+from .sceneaction.buildin import *
+from .sceneaction.buildout import *
+from .sceneaction.presets import *
 from .helpers import size_preset_tuple

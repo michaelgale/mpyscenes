@@ -44,22 +44,14 @@ class Movie:
         self.size[1] = value
 
     def add_object(self, obj):
-        if isinstance(obj, list):
-            objects = obj
-        else:
-            objects = [obj]
+        objects = listify(obj)
         for object in objects:
             self.objects.append(object)
             object.pixsize = self.size
 
-    def add_scene(self, scene, start_time=0):
-        scene.fps = self.fps
-        scene.setup_scene(start_time=start_time)
-        self.add_object(scene.obj)
-
     def add_sceneobject(self, sceneobject, start_time=0):
-        sceneobject.scene.fps = self.fps
-        sceneobject.scene.setup_scene(start_time=start_time)
+        sceneobject.fps = self.fps
+        sceneobject.setup_scene(start_time=start_time)
         self.add_object(sceneobject)
 
     def _frame_filename(self, filename):

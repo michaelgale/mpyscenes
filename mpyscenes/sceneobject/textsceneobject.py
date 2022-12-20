@@ -13,7 +13,6 @@ class TextSceneObject(SceneObject):
     def __init__(self, text="", **kwargs):
         super().__init__(**kwargs)
         self.text = text
-        self.color = "white"
         self.font = "DIN-Bold"
         self.fontsize = 64
         self.kerning = 0
@@ -104,7 +103,7 @@ class TextSceneObject(SceneObject):
 
     def get_clip_frame(self, frame, t0, t1):
         self.update_frame(frame)
-        if self.clip_obj is None:
+        if self.clip_obj is None or not self.color == self.prev_color:
             self.clip_obj = self.new_clip_obj()
         if not self.opacity > 0:
             return None

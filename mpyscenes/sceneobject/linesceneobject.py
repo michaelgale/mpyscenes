@@ -13,7 +13,6 @@ from ..helpers import *
 class LineSceneObject(SceneObject):
     def __init__(self, coords=None, **kwargs):
         self.stroke_width = 2
-        self.color = (255, 255, 255)
         self.aspect_correct = False
         super().__init__(**kwargs)
         self.coords = [coords]

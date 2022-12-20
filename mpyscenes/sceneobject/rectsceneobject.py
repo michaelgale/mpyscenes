@@ -11,7 +11,6 @@ class RectSceneObject(SceneObject):
     def __init__(self, size=(0, 0), **kwargs):
         self.rect = Rect(*size)
         super().__init__(**kwargs)
-        self.color = (255, 255, 255)
         self.top_anim = None
         self.bottom_anim = None
         self.left_anim = None

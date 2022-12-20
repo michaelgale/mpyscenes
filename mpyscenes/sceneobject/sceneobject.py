@@ -8,11 +8,11 @@ class SceneObject:
     """Base class which defines the properties of an object in a movie scene.
     SceneObjects can be added directly to a Movie if they are more or less
     persistent in a movie.  For animated or special behaviors in a movie, a
-    SceneObject can be attached to a Scene and have one or more SceneActions
-    applied to it."""
+    SceneObject can have one or more SceneActions applied to it."""
 
     def __init__(self, **kwargs):
         self.pos = Point(0, 0)
+        self.color = (255, 255, 255)
         self.opacity = 1
         self.scale = 1.0
         self.angle = 0.0
@@ -43,7 +43,13 @@ class SceneObject:
             self.pixsize = (0, 0)
         if "pos" in kwargs:
             self.set_pos(kwargs["pos"])
-        self.scene = Scene(obj=self)
+
+        self.prev_color = (255, 255, 255)
+        self.fps = 60
+        self.buildin = []
+        self.buildout = []
+        self.actions = []
+        self.animators = {}
 
     def __str__(self):
         s = []
@@ -90,6 +96,7 @@ class SceneObject:
             color[1] = int(self.color_g_anim[frame])
         if self.color_b_anim is not None:
             color[2] = int(self.color_b_anim[frame])
+        self.prev_color = self.color
         self.color = tuple(color)
 
     def assign_animator_from_key(self, key, animator):
@@ -126,14 +133,123 @@ class SceneObject:
         elif key == "draw":
             self.draw_anim = animator
 
-    def add_action(self, action):
-        self.scene.add_action(action)
+    def object_value_from_key(self, key):
+        if key == "x":
+            return self.pos.x
+        elif key == "y":
+            return self.pos.y
+        elif key == "left":
+            return self.rect.left
+        elif key == "right":
+            return self.rect.right
+        elif key == "width":
+            return self.rect.width
+        elif key == "height":
+            return self.rect.height
+        elif key == "top":
+            return self.rect.top
+        elif key == "bottom":
+            return self.rect.bottom
+        elif key == "opacity":
+            return self.opacity
+        elif key == "blur":
+            return self.blur
+        elif key == "scale":
+            return self.scale
+        elif key == "angle":
+            return self.angle
+        elif key == "color_r":
+            return self.color[0]
+        elif key == "color_g":
+            return self.color[1]
+        elif key == "color_b":
+            return self.color[2]
+        elif key == "draw":
+            return self.draw_length
+        return None
 
-    def add_buildin(self, action):
-        self.scene.add_buildin(action)
+    def add_action(self, actions):
+        actions = listify(actions)
+        t0 = actions[0].delay
+        for action in actions:
+            action.delay = t0
+            self.actions.append(action)
+            t0 += action.duration
 
-    def add_buildout(self, action):
-        self.scene.add_buildout(action)
+    def add_buildin(self, actions):
+        actions = listify(actions)
+        t0 = actions[0].delay
+        for action in actions:
+            action.delay = t0
+            self.buildin.append(action)
+            t0 += action.duration
+
+    def add_buildout(self, actions):
+        actions = listify(actions)
+        t0 = actions[0].delay
+        for action in actions:
+            action.delay = t0
+            self.buildout.append(action)
+            t0 += action.duration
+
+    def _setup_action_animators(self, actions, start_time=0, **kwargs):
+        max_duration = 0
+        if len(actions) > 0:
+            for action in actions:
+                t0 = start_time + action.delay
+                td = action.duration + action.delay
+                action.setup_animators(start_time=t0, fps=self.fps, **kwargs)
+                if td > max_duration:
+                    max_duration = td
+        return max_duration
+
+    def _initialize_first_animator(self, key, animators):
+        a = animators[0]
+        if a.link_to_previous:
+            a.link_to_previous = False
+            v = self.object_value_from_key(key)
+            if v is not None:
+                a.start_value = v
+                if a.value_from_previous is not None:
+                    a.stop_value = a.value_from_previous
+                else:
+                    a.stop_value = a.start_value + a.offset_from_previous
+
+    def _assign_animators(self, key, animators):
+        self._initialize_first_animator(key, animators)
+        a = AnimatorGroup(animators[0].start_frame, [animators[0]])
+        a.fps = self.fps
+        if len(animators) > 1:
+            for animator in animators[1:]:
+                delay = animator.start_frame - a.stop_frame
+                a.add_animator(animator, with_delay=delay)
+        self.assign_animator_from_key(key, a)
+        if key == "x":
+            if "loc" in self.__dict__:
+                self.pos = Point(0, self.loc)
+        elif key == "y":
+            if "loc" in self.__dict__:
+                self.pos = Point(self.loc, 0)
+
+    def setup_scene(self, start_time=0, **kwargs):
+        for action in [*self.buildin, *self.actions, *self.buildout]:
+            action.fps = self.fps
+        # self.setup_actions()
+        t0 = start_time
+        t0 += self._setup_action_animators(self.buildin, start_time=t0, **kwargs)
+        t0 += self._setup_action_animators(self.actions, start_time=t0, **kwargs)
+        t0 += self._setup_action_animators(self.buildout, start_time=t0, **kwargs)
+        self.animators = {}
+        for action in [*self.buildin, *self.actions, *self.buildout]:
+            for k, v in action.animators.items():
+                if v is None:
+                    continue
+                if k not in self.animators:
+                    self.animators[k] = [v]
+                else:
+                    self.animators[k].append(v)
+        for k, v in self.animators.items():
+            self._assign_animators(k, v)
 
     def color_name(self, v):
         if isinstance(v, (tuple, list)):

@@ -11,6 +11,12 @@ START_END_MAP = {
 }
 
 
+def listify(items):
+    if not isinstance(items, list):
+        return [items]
+    return items
+
+
 def size_preset_tuple(sizestr):
     size = None
     if sizestr is not None:
