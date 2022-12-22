@@ -18,6 +18,8 @@ class SceneObject:
         self.angle = 0.0
         self.blur = 0
         self.layer = 0
+        self.shearx = 0
+        self.sheary = 0
         self.x_anim = None
         self.y_anim = None
         self.op_anim = None
@@ -28,6 +30,8 @@ class SceneObject:
         self.color_r_anim = None
         self.color_g_anim = None
         self.color_b_anim = None
+        self.shearx_anim = None
+        self.sheary_anim = None
         self.clip_obj = None
         self.mask_obj = None
         self.is_mask = False
@@ -88,6 +92,14 @@ class SceneObject:
         if self.blur_anim is not None:
             self.blur = self.blur_anim[frame]
 
+    def update_frame_shearx(self, frame):
+        if self.shearx_anim is not None:
+            self.shearx = self.shearx_anim[frame]
+
+    def update_frame_sheary(self, frame):
+        if self.sheary_anim is not None:
+            self.sheary = self.sheary_anim[frame]
+
     def update_frame_color(self, frame):
         color = list(self.color)
         if self.color_r_anim is not None:
@@ -98,6 +110,33 @@ class SceneObject:
             color[2] = int(self.color_b_anim[frame])
         self.prev_color = self.color
         self.color = tuple(color)
+
+    def shear_angles(self):
+        angx, angy = 0, 0
+        if self.shearx:
+            angx = math.degrees(math.atan2(self.shearx, 1))
+        if self.sheary:
+            angy = math.degrees(math.atan2(self.sheary, 1))
+        return angx, angy
+
+    def transform_img(self, img, rect, scale=1.0):
+        rw, rh = int(rect.width * self.pixsize[0]), int(rect.height * self.pixsize[1])
+        rx, ry = rect.get_centre()
+        xc, yc = int(rx * self.pixsize[0]), int(ry * self.pixsize[1])
+        angx, angy = self.shear_angles()
+        if abs(1.0 - scale) > 0:
+            img = ImageOps.scale(img, scale)
+        img = add_margin(img, int(max(rw / 2, rh / 2)))
+        img = img.rotate(self.angle, expand=True)
+        x0, y0 = int(xc - img.size[0] / 2), int(yc - img.size[1] / 2)
+        x0 += int(2 * rh * math.sin(math.radians(angx)))
+        y0 += int(2 * rw * math.sin(math.radians(angy)))
+        ps = (self.pixsize[0], self.pixsize[1])
+        if self.shearx:
+            img = img.transform(ps, Image.AFFINE, (1.0, self.shearx, 0, 0, 1, 0))
+        if self.sheary:
+            img = img.transform(ps, Image.AFFINE, (1.0, 0, 0, self.sheary, 1, 0))
+        return img, x0, y0
 
     def assign_animator_from_key(self, key, animator):
         if key == "x":
@@ -132,6 +171,10 @@ class SceneObject:
             self.color_b_anim = animator
         elif key == "draw":
             self.draw_anim = animator
+        elif key == "shearx":
+            self.shearx_anim = animator
+        elif key == "sheary":
+            self.sheary_anim = animator
 
     def object_value_from_key(self, key):
         if key == "x":
@@ -166,6 +209,10 @@ class SceneObject:
             return self.color[2]
         elif key == "draw":
             return self.draw_length
+        elif key == "shearx":
+            return self.shearx
+        elif key == "sheary":
+            return self.sheary
         return None
 
     def add_action(self, actions):
@@ -199,6 +246,8 @@ class SceneObject:
                 t0 = start_time + action.delay
                 td = action.duration + action.delay
                 action.setup_animators(start_time=t0, fps=self.fps, **kwargs)
+                if "loc" in action.__dict__:
+                    self.loc = action.loc
                 if td > max_duration:
                     max_duration = td
         return max_duration
@@ -245,9 +294,15 @@ class SceneObject:
                 if v is None:
                     continue
                 if k not in self.animators:
-                    self.animators[k] = [v]
+                    if isinstance(v, list):
+                        self.animators[k] = v
+                    else:
+                        self.animators[k] = [v]
                 else:
-                    self.animators[k].append(v)
+                    if isinstance(v, list):
+                        self.animators[k].extend(v)
+                    else:
+                        self.animators[k].append(v)
         for k, v in self.animators.items():
             self._assign_animators(k, v)
 

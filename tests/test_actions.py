@@ -6,12 +6,12 @@ from mpyscenes import *
 
 
 def test_actions():
-    f1 = FadeInAction()
+    f1 = FadeBuildInAction()
     assert f1.duration is not None
 
 
 def test_dropinaction():
-    f1 = DropInBuildAction(
+    f1 = DropBuildInAction(
         duration=3, start_from="right", loc=0.1, end_at=0.3, degree=3
     )
     assert f1.duration == 3
@@ -22,7 +22,7 @@ def test_dropinaction():
 
 
 def test_dropin_action():
-    f1 = FlyInBuildAction(duration=3, start_from="right", loc=0.1, end_at=0.3, degree=3)
+    f1 = FlyBuildInAction(duration=3, start_from="right", loc=0.1, end_at=0.3, degree=3)
     assert f1.duration == 3
     assert f1.start_from == "right"
     assert f1.loc == 0.1
@@ -32,13 +32,13 @@ def test_dropin_action():
 
 
 def test_fadeout_action():
-    f1 = FadeOutAction(fps=30, duration=3)
+    f1 = FadeBuildOutAction(fps=30, duration=3)
     assert f1.duration == 3
     assert f1.fps == 30
 
 
 def test_flyout_action():
-    f1 = FlyOutBuildAction(duration=3, start_from=0.1, loc=0.2, end_at="top", degree=3)
+    f1 = FlyBuildOutAction(duration=3, start_from=0.1, loc=0.2, end_at="top", degree=3)
     assert f1.duration == 3
     assert f1.start_from == 0.1
     assert f1.loc == 0.2

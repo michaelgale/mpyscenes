@@ -1,3 +1,4 @@
+from PIL import Image, ImageDraw, ImageOps
 import numpy as np
 import scipy
 from moviepy.editor import *
@@ -80,3 +81,12 @@ def crop_clip(clip, size):
     clip.mask.img = clip.mask.img[y1:y2, x1:x2]
     clip.mask.size = size
     return clip
+
+
+def add_margin(img, margin):
+    width, height = img.size
+    new_width = width + 2 * margin
+    new_height = height + 2 * margin
+    result = Image.new(img.mode, (new_width, new_height))
+    result.paste(img, (margin, margin))
+    return result

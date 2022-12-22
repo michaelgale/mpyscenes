@@ -94,6 +94,8 @@ class TextSceneObject(SceneObject):
         self.update_frame_opacity(frame)
         self.update_frame_scale(frame)
         self.update_frame_blur(frame)
+        self.update_frame_shearx(frame)
+        self.update_frame_sheary(frame)
 
     def get_frame_mask(self, frame, t0, t1):
         self.mask_obj.scenesize = self.pixsize
@@ -108,7 +110,12 @@ class TextSceneObject(SceneObject):
         if not self.opacity > 0:
             return None
         clipx = self.clip_obj.set_duration(t1 - t0)
-        if self.angle_anim is not None or abs(self.angle) > 0:
+        if (
+            self.angle_anim is not None
+            or abs(self.angle) > 0
+            or self.shearx_anim is not None
+            or self.sheary_anim is not None
+        ):
             pix = Image.new("RGBA", (self.pixsize[0], self.pixsize[1]), (0, 0, 0, 0))
             x = np.zeros_like(pix)
             x[:, :, 0] = self.clip_obj.img[:, :, 0]
@@ -118,7 +125,11 @@ class TextSceneObject(SceneObject):
             x[:, :, 3] = np.minimum(1, m) * 255
             ximg = Image.fromarray(x)
             ximg = ximg.rotate(self.angle, resample=Image.BILINEAR)
-            pix.paste(ximg)
+            r = Rect(self.width / self.pixsize[0], self.height / self.pixsize[1])
+            r.move_to(self.pos.as_tuple())
+            ximg, x0, y0 = self.transform_img(ximg, r)
+            r = Rect(self.width, self.height)
+            pix.paste(ximg, box=(-int(r.width / 2), -int(r.height / 2)))
             pix = np.asarray(pix)
             clipx.mask = ImageClip(1.0 * pix[:, :, 3] / 255, ismask=True)
             clipx = ImageClip(pix, transparent=True, ismask=False)
