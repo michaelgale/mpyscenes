@@ -31,6 +31,12 @@ class FlyInOutScene(Scene):
         self.setup_actions()
 
     def setup_actions(self):
+        START_END_MAP = {
+            "left": "right",
+            "top": "bottom",
+            "right": "left",
+            "left": "right",
+        }
         mid_duration = self.duration - (self.intro + self.outro)
         mid0, mid1 = 0.4, 0.6
         if self.start_from in ["right", "bottom"]:

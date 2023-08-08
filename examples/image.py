@@ -16,7 +16,7 @@ def main():
     FadeBuildOutAction(obj=obj, duration=0.25)
 
     ms.add_sceneobject(obj, start_time=0.25)
-    ms.render_video(0, 4, prores_alpha=False)
+    ms.render_video(0, 4, prores_alpha=True)
 
 
 if __name__ == "__main__":

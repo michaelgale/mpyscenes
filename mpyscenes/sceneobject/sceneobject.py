@@ -38,7 +38,7 @@ class SceneObject:
         for k, v in kwargs.items():
             if k in self.__dict__:
                 if "color" in k:
-                    self.__dict__[k] = SceneObject.color_to_tuple(v)
+                    self.__dict__[k] = color_to_tuple(v)
                 else:
                     self.__dict__[k] = v
         if "pixsize" in kwargs:
@@ -72,6 +72,39 @@ class SceneObject:
         x = (self.pos[0] - 0.5) * self.pixsize[0]
         y = (self.pos[1] - 0.5) * self.pixsize[1]
         return x, y
+
+    @property
+    def animator_count(self):
+        all_animators = [
+            self.x_anim,
+            self.y_anim,
+            self.op_anim,
+            self.scale_anim,
+            self.blur_anim,
+            self.enable_anim,
+            self.angle_anim,
+            self.color_r_anim,
+            self.color_g_anim,
+            self.color_b_anim,
+            self.shearx_anim,
+            self.sheary_anim,
+        ]
+        ac = 0
+        for a in all_animators:
+            if a is not None:
+                if a.is_active:
+                    ac += 1
+        return ac
+
+    @property
+    def pix_size(self):
+        return (self.pixsize[0], self.pixsize[1])
+
+    def pix_dim(self, p):
+        return int(p[0] * self.pixsize[0]), int(p[1] * self.pixsize[1])
+
+    def rect_pix_dim(self, rect):
+        return int(rect.width * self.pixsize[0]), int(rect.height * self.pixsize[1])
 
     def set_pos(self, pos, y=None):
         self.pos = Point(pos, y)
@@ -119,10 +152,9 @@ class SceneObject:
             angy = math.degrees(math.atan2(self.sheary, 1))
         return angx, angy
 
-    def transform_img(self, img, rect, scale=1.0):
-        rw, rh = int(rect.width * self.pixsize[0]), int(rect.height * self.pixsize[1])
-        rx, ry = rect.get_centre()
-        xc, yc = int(rx * self.pixsize[0]), int(ry * self.pixsize[1])
+    def transform_img(self, img, rect, scale=1.0, no_rotate=False):
+        rw, rh = self.pix_dim((rect.width, rect.height))
+        xc, yc = self.pix_dim(rect.get_centre())
         angx, angy = self.shear_angles()
         if abs(1.0 - scale) > 0:
             img = ImageOps.scale(img, scale)
@@ -259,8 +291,8 @@ class SceneObject:
             v = self.object_value_from_key(key)
             if v is not None:
                 a.start_value = v
-                if a.value_from_previous is not None:
-                    a.stop_value = a.value_from_previous
+                if a.previous_to_value is not None:
+                    a.stop_value = a.previous_to_value
                 else:
                     a.stop_value = a.start_value + a.offset_from_previous
 
@@ -305,25 +337,3 @@ class SceneObject:
                         self.animators[k].append(v)
         for k, v in self.animators.items():
             self._assign_animators(k, v)
-
-    def color_name(self, v):
-        if isinstance(v, (tuple, list)):
-            return colour_name_from_tuple(v)
-        elif isinstance(v, str):
-            if v[0] == "#":
-                return colour_name_from_hex(v)
-        return v
-
-    @staticmethod
-    def color_to_tuple(v):
-        c = (0, 0, 0)
-        if isinstance(v, str):
-            if v[0] == "#":
-                c = rgb_from_hex(v, as_uint8=True)
-            else:
-                c = colour_from_name(v)
-        elif isinstance(v, (list, tuple)):
-            c = tuple(v)
-            if c[0] <= 1.0 and c[1] <= 1.0 and c[2] <= 1.0:
-                c = (int(c[x] * 255) for x in range(3))
-        return c

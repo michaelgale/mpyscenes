@@ -4,7 +4,7 @@ from mpyscenes import *
 
 
 def main():
-    ms = Movie(size="720p", fps=30, filename="./movies/rotate_movie")
+    ms = Movie(size="720p", fps=60, filename="./movies/rotate_movie")
     img = ImageSceneObject(
         filename="LogoColour512px.png", size=(0.2, 0.2), pos=(0.3, 0.6), angle=45
     )
@@ -27,7 +27,7 @@ def main():
     r0.add_action(RotateAction(duration=1, delay=0.25, angle=180))
     ms.add_sceneobject(r0, start_time=0)
 
-    ms.render_video(0, 2, prores_alpha=False)
+    ms.render_video(0, 3, prores_alpha=False)
 
 
 if __name__ == "__main__":

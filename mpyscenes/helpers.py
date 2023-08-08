@@ -4,13 +4,6 @@ import scipy
 from moviepy.editor import *
 from toolbox import *
 
-START_END_MAP = {
-    "left": "right",
-    "top": "bottom",
-    "right": "left",
-    "left": "right",
-}
-
 
 def listify(items):
     if not isinstance(items, list):
@@ -90,3 +83,37 @@ def add_margin(img, margin):
     result = Image.new(img.mode, (new_width, new_height))
     result.paste(img, (margin, margin))
     return result
+
+
+def new_image_copy_into(img, like_img):
+    """Copies img into a new image with the same size as like_img"""
+    x = np.zeros_like(like_img)
+    x[:, :, 0] = img[:, :, 0]
+    x[:, :, 1] = img[:, :, 1]
+    x[:, :, 2] = img[:, :, 2]
+    m = (x[:, :, 0] + x[:, :, 1] + x[:, :, 2]) / 3
+    x[:, :, 3] = np.minimum(1, m) * 255
+    return Image.fromarray(x)
+
+
+def color_name(v):
+    if isinstance(v, (tuple, list)):
+        return colour_name_from_tuple(v)
+    elif isinstance(v, str):
+        if v[0] == "#":
+            return colour_name_from_hex(v)
+    return v
+
+
+def color_to_tuple(v):
+    c = (0, 0, 0)
+    if isinstance(v, str):
+        if v[0] == "#":
+            c = rgb_from_hex(v, as_uint8=True)
+        else:
+            c = colour_from_name(v)
+    elif isinstance(v, (list, tuple)):
+        c = tuple(v)
+        if c[0] <= 1.0 and c[1] <= 1.0 and c[2] <= 1.0:
+            c = (int(c[x] * 255) for x in range(3))
+    return c

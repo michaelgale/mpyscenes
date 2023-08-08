@@ -69,7 +69,7 @@ class SceneAction:
         kw = {
             "fps": self.fps,
             "offset_from_previous": offset,
-            "value_from_previous": to_value,
+            "previous_to_value": to_value,
         }
         if self.oscillate:
             a = SinusoidOscillateAnimator(t0, 0, t1, 0, self.rate, **kw)

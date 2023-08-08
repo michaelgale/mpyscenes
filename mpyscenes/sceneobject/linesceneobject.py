@@ -26,7 +26,7 @@ class LineSceneObject(SceneObject):
             coords = self.poly_lines[0]
         for c in coords:
             r = self.pixsize[0] / self.pixsize[1] if self.aspect_correct else 1.0
-            pc.append((int(c[0] * self.pixsize[0]), int(r * c[1] * self.pixsize[1])))
+            pc.append(self.pix_dim((c[0], r * c[1])))
         return pc
 
     @property
@@ -91,7 +91,7 @@ class LineSceneObject(SceneObject):
         self.update_poly_points(frame)
 
     def get_clip_obj(self):
-        pix = Image.new("RGBA", (self.pixsize[0], self.pixsize[1]), (0, 0, 0, 0))
+        pix = Image.new("RGBA", self.pix_size, (0, 0, 0, 0))
         draw = ImageDraw.Draw(pix)
         for line in self.poly_lines:
             draw.line(

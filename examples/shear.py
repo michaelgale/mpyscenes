@@ -6,7 +6,8 @@ from mpyscenes import *
 def main():
     ms = Movie(size="720p", fps=30, filename="./movies/shear_movie")
     r0 = RectSceneObject(size=(0.4, 0.2), pos=(0.6, 0.6), color="#C01040")
-    FlyInOutScene(obj=r0, start_from="right", fade_in=True, fade_out=False, shear=0.3)
+    # r0 = TextSceneObject(text="hello", fontsize=100, pos=(0.6, 0.6))
+    FlyInOutScene(obj=r0, start_from="left", fade_in=True, fade_out=False, shear=0.3)
     ms.add_sceneobject(r0, start_time=0.25)
 
     obj = ImageSceneObject(

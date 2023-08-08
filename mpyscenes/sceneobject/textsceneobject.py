@@ -1,6 +1,5 @@
 import numpy as np
-from PIL import Image, ImageDraw, ImageOps
-from imageio import imread, imsave
+from PIL import Image
 
 from moviepy.editor import *
 
@@ -49,7 +48,7 @@ class TextSceneObject(SceneObject):
         def _get_text_clip(size=None):
             r = TextClip(
                 self.text,
-                color=self.color_name(self.color),
+                color=color_name(self.color),
                 size=size,
                 font=self.font,
                 fontsize=self.fontsize,
@@ -116,20 +115,15 @@ class TextSceneObject(SceneObject):
             or self.shearx_anim is not None
             or self.sheary_anim is not None
         ):
-            pix = Image.new("RGBA", (self.pixsize[0], self.pixsize[1]), (0, 0, 0, 0))
-            x = np.zeros_like(pix)
-            x[:, :, 0] = self.clip_obj.img[:, :, 0]
-            x[:, :, 1] = self.clip_obj.img[:, :, 1]
-            x[:, :, 2] = self.clip_obj.img[:, :, 2]
-            m = (x[:, :, 0] + x[:, :, 1] + x[:, :, 2]) / 3
-            x[:, :, 3] = np.minimum(1, m) * 255
-            ximg = Image.fromarray(x)
-            ximg = ximg.rotate(self.angle, resample=Image.BILINEAR)
+            pix = Image.new("RGBA", self.pix_size, (0, 0, 0, 0))
+            ximg = new_image_copy_into(self.clip_obj.img, pix)
             r = Rect(self.width / self.pixsize[0], self.height / self.pixsize[1])
             r.move_to(self.pos.as_tuple())
-            ximg, x0, y0 = self.transform_img(ximg, r)
+            ximg, x0, y0 = self.transform_img(ximg, r, no_rotate=False)
             r = Rect(self.width, self.height)
-            pix.paste(ximg, box=(-int(r.width / 2), -int(r.height / 2)))
+            pix.paste(
+                ximg, box=(x0, y0)
+            )  # , box=(-int(r.width / 2), -int(r.height / 2)))
             pix = np.asarray(pix)
             clipx.mask = ImageClip(1.0 * pix[:, :, 3] / 255, ismask=True)
             clipx = ImageClip(pix, transparent=True, ismask=False)
